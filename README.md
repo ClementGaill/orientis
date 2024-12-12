@@ -1,4 +1,4 @@
-# orientis
+# orienty
 
 A new Flutter project.
 

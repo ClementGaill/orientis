@@ -1,4 +1,4 @@
-name: orientis
+name: orienty
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -39,10 +39,11 @@ dependencies:
   # Config
   lucide_icons: ^0.257.0
   flutter_svg: ^2.0.16
-  pinput: ^5.0.0
-  smart_auth: ^2.0.0
   http: ^1.2.2
   appwrite: ^13.0.0
+  flutter_dotenv: ^5.2.1
+  page_transition: ^2.1.0
+  dot_navigation_bar: ^1.0.2
 
 dev_dependencies:
   flutter_test:
@@ -67,9 +68,12 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
+
     - assets/Fonts/Fonts.ttf
 
     - assets/Images/Illustration/Flat/SearchFile.svg
+    - assets/Images/Illustration/Flat/Confirmed.svg
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

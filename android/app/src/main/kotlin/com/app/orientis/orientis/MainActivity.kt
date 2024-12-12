@@ -1,4 +1,4 @@
-package com.app.orientis.orientis
+package com.app.orienty
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,17 +1,22 @@
+// ignore_for_file: file_names
+
 import 'package:flutter/material.dart';
+import 'package:orienty/Widgets/Frontend/colors.dart';
 
 class CustomTextField extends StatelessWidget {
   final String? hintText;
   final TextEditingController? controller;
   final bool obscureText;
   final IconData? icon;
+  final Function(String)? onSubmitted;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
 
-  CustomTextField({
+  const CustomTextField({super.key, 
     this.hintText,
     this.controller,
     this.obscureText = false,
+    this.onSubmitted,
     this.icon,
     this.keyboardType,
     this.validator,
@@ -24,6 +29,7 @@ class CustomTextField extends StatelessWidget {
       obscureText: obscureText,
       keyboardType: keyboardType,
       validator: validator,
+      onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
         prefixIcon: icon != null ? Icon(icon) : null,
         hintText: hintText,
@@ -38,7 +44,7 @@ class CustomTextField extends StatelessWidget {
           ),
         ),
         filled: true,
-        fillColor: Colors.grey[200],
+        fillColor: secondaryColor,
       ),
     );
   }

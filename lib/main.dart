@@ -1,7 +1,13 @@
+// ignore_for_file: use_super_parameters
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart' as widgets;
-import 'package:orientis/Auth/phone.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:appwrite/appwrite.dart';
+import 'package:orienty/Auth/homeAuth.dart';
+import 'package:orienty/Main/mainPage.dart';
+import 'package:orienty/Widgets/Frontend/colors.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -14,10 +20,12 @@ class MyHttpOverrides extends HttpOverrides{
 }
 
 void main() async {
-  HttpOverrides.global = MyHttpOverrides();
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -27,9 +35,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Global Fonts with Bold',
       theme: ThemeData(
+        colorScheme: colorScheme,
         brightness: Brightness.light,
-        primaryColor: Colors.black,
-        scaffoldBackgroundColor: Colors.white,
+        primaryColor: primaryColor,
+        scaffoldBackgroundColor: backgroundColor,
         fontFamily: 'BalooBhaijaan2',
         textTheme: const TextTheme(
           // Définition des styles pour chaque type de texte
@@ -108,8 +117,8 @@ class MyApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             minimumSize: const widgets.Size(double.infinity, 50),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-            backgroundColor: Colors.black, // Fond noir pour les boutons
-            foregroundColor: Colors.white, // Texte en blanc
+            backgroundColor: primaryColor, // Fond noir pour les boutons
+            foregroundColor: backgroundColor, // Texte en blanc
             textStyle: const TextStyle(
               fontWeight: FontWeight.bold,
               fontFamily: 'BalooBhaijaan2',
@@ -117,52 +126,62 @@ class MyApp extends StatelessWidget {
           ),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white, // Fond blanc pour la barre d'application
-          foregroundColor: Colors.black, // Texte noir dans la barre d'application
+          backgroundColor: backgroundColor, // Fond blanc pour la barre d'application
+          foregroundColor: primaryColor, // Texte noir dans la barre d'application
           elevation: 0, // Sans ombre pour un style minimaliste
           centerTitle: false,
         ),
       ),
-      home: const Phone(),
+      home: const SplashScreen(),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
 
   @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  void verifyAuth() async {
+    // Configuration Appwrite
+    Client client = Client();
+    client
+        .setEndpoint('https://cloud.appwrite.io/v1')
+        .setProject(dotenv.env['APPWRITE_PROJECT_ID'] ?? '')
+        .setSelfSigned();
+
+
+    // Vérification de la session
+    try {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MyHomePage()),
+      );
+      print('connected');
+    } catch (e) {
+      Navigator.pushReplacement(
+      context,
+        MaterialPageRoute(builder: (context) => const HomeAuth()),
+      );
+      print('no connected');
+    }
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    verifyAuth();
+  }
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Orientis'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Titre Principal',
-              style: Theme.of(context).textTheme.displayLarge,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Sous-titre',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Texte de paragraphe normal',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text('Bouton Exemple'),
-            ),
-          ],
-        ),
-      ),
+
+    return const Scaffold(
+
     );
   }
 }

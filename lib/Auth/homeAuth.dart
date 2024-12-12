@@ -1,6 +1,9 @@
+// ignore_for_file: file_names
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:orientis/Widgets/Frontend/delayAnimation.dart';
+import 'package:orienty/Auth/emailAuth.dart';
+import 'package:orienty/Widgets/Frontend/delayAnimation.dart';
+import 'package:page_transition/page_transition.dart';
 
 class HomeAuth extends StatefulWidget {
   const HomeAuth({super.key});
@@ -26,7 +29,9 @@ class _HomeAuthState extends State<HomeAuth> {
                 DelayedAnimation(delay: 1000, child: Text('Bienvenue !', style: Theme.of(context).textTheme.titleLarge,)),
                 DelayedAnimation(delay: 1500, child: Text('Prêts a trouver la filière de tes rêves ?', style: Theme.of(context).textTheme.titleSmall,)),
                 const SizedBox(height: 10.0,),
-                DelayedAnimation(delay: 2000, child: ElevatedButton(onPressed: () {}, child: const Text('Commencer !'))),
+                DelayedAnimation(delay: 2000, child: ElevatedButton(onPressed: () {
+                  Navigator.push(context, PageTransition(type: PageTransitionType.bottomToTop, child: const EmailAuth(), duration: const Duration(milliseconds: 500)));
+                }, child: const Text('Commencer !'))),
               ],
             ),
           ),

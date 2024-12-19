@@ -10,6 +10,7 @@ const accentColor = Color(0xFF5384fd);
 const accentFgColor = Color.fromARGB(255, 61, 97, 189);
 const greyColor = Color(0xFF9498a0);
 const errorColor = Color.fromARGB(255, 251, 163, 163);
+const warningColor = Color(0xFFe5a872);
   
 const colorScheme = ColorScheme(
   brightness: Brightness.light,

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "423642543061",
+    "project_id": "orientis-8d0ec",
+    "storage_bucket": "orientis-8d0ec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423642543061:android:6e8026298b576edbb4c35c",
+        "android_client_info": {
+          "package_name": "com.app.orienty"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-5OnDfRNWhCi0DzBvQXW9FK7mDEuVgEI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,17 +1,16 @@
 // ignore_for_file: file_names, use_build_context_synchronously
-import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:orienty/Auth/profilAuth.dart';
 import 'package:orienty/Main/mainPage.dart';
+import 'package:orienty/Widgets/Frontend/delayAnimation.dart';
 import 'package:orienty/Widgets/Frontend/textField.dart';
 import 'package:page_transition/page_transition.dart';
-import '../Widgets/Frontend/delayAnimation.dart';
 
 class PasswordPage extends StatefulWidget {
   final String email;
 
-  const PasswordPage({required this.email, super.key});
+  const PasswordPage({super.key, required this.email});
 
   @override
   State<PasswordPage> createState() => _PasswordPageState();
@@ -19,55 +18,60 @@ class PasswordPage extends StatefulWidget {
 
 class _PasswordPageState extends State<PasswordPage> {
   final TextEditingController passwordController = TextEditingController();
-  late Client client;
-  late Account account;
-
-  @override
-  void initState() {
-    super.initState();
-    client = Client()
-        .setEndpoint('https://cloud.appwrite.io/v1')
-        .setProject(dotenv.env['APPWRITE_PROJECT_ID'] ?? '');
-    account = Account(client);
-  }
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> handleLogin() async {
     try {
       // Tentative de connexion
-      await account.createEmailPasswordSession(
+      // ignore: unused_local_variable
+      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: widget.email,
         password: passwordController.text.trim(),
       );
-      // Redirection vers la page d'accueil
-      Navigator.pushReplacement(context, PageTransition(type: PageTransitionType.rightToLeft, child: const MyHomePage(), duration: const Duration(milliseconds: 500)));
+
+      // Redirection vers la page principale
+      Navigator.pushReplacement(
+        context,
+        PageTransition(
+          type: PageTransitionType.rightToLeft,
+          child: const MainPage(),
+          duration: const Duration(milliseconds: 500),
+        ),
+      );
     } catch (e) {
-      if (e is AppwriteException && e.code == 401) {
-        // Si l'utilisateur n'existe pas, création d'un nouveau compte
-        final newUser = await account.create(
-          userId: ID.unique(),
-          email: widget.email,
-          password: passwordController.text.trim(),
-        );
+      if (e is FirebaseAuthException && e.code == 'user-not-found') {
+        try {
+          // Création d'un nouvel utilisateur
+          final UserCredential newUser = await _auth.createUserWithEmailAndPassword(
+            email: widget.email,
+            password: passwordController.text.trim(),
+          );
 
-        // Récupération de l'ID du nouvel utilisateur
-        final userId = newUser.$id;
+          // Récupération de l'ID du nouvel utilisateur
+          final String userId = newUser.user?.uid ?? '';
 
-        // Créer une session pour le nouvel utilisateur
-        await account.createEmailPasswordSession(
-          email: widget.email,
-          password: passwordController.text.trim(),
-        );
-
-        // Redirection vers la page de configuration
-        Navigator.pushReplacement(context, PageTransition(type: PageTransitionType.rightToLeft, child: RegistrationPage(userId: userId), duration: const Duration(milliseconds: 500)));
+          // Redirection vers la page de configuration du profil
+          Navigator.pushReplacement(
+            context,
+            PageTransition(
+              type: PageTransitionType.rightToLeft,
+              child: RegistrationPage(userId: userId),
+              duration: const Duration(milliseconds: 500),
+            ),
+          );
+        } catch (signupError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur lors de l\'inscription : $signupError')),
+          );
+          print(signupError);
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(content: Text('Erreur : $e')),
         );
+        print('erreur: $e');
       }
     }
-
-
   }
 
   @override

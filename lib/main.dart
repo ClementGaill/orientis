@@ -1,13 +1,15 @@
-// ignore_for_file: use_super_parameters
+// ignore_for_file: use_super_parameters, library_private_types_in_public_api
 
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart' as widgets;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:appwrite/appwrite.dart';
 import 'package:orienty/Auth/homeAuth.dart';
 import 'package:orienty/Main/mainPage.dart';
 import 'package:orienty/Widgets/Frontend/colors.dart';
+import 'package:orienty/firebase_options.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -22,6 +24,11 @@ class MyHttpOverrides extends HttpOverrides{
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+
+  // Initialisation de Firebase avec les options spécifiques à la plateforme
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform, // Utilisation du fichier généré
+  );
 
   runApp(const MyApp());
 }
@@ -141,47 +148,60 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  void verifyAuth() async {
-    // Configuration Appwrite
-    Client client = Client();
-    client
-        .setEndpoint('https://cloud.appwrite.io/v1')
-        .setProject(dotenv.env['APPWRITE_PROJECT_ID'] ?? '')
-        .setSelfSigned();
-
-
-    // Vérification de la session
-    try {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MyHomePage()),
-      );
-      print('connected');
-    } catch (e) {
-      Navigator.pushReplacement(
-      context,
-        MaterialPageRoute(builder: (context) => const HomeAuth()),
-      );
-      print('no connected');
-    }
-  }
-
-
   @override
   void initState() {
     super.initState();
-
     verifyAuth();
   }
+
+  void verifyAuth() async {
+    // Utilisation de Future.delayed pour garantir que la navigation se produit après l'initialisation complète
+    await Future.delayed(const Duration(seconds: 2)); // Attente de 2 secondes pour s'assurer que l'initialisation est complète
+
+    try {
+      // Vérification si l'utilisateur est authentifié via Firebase
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // Si l'utilisateur est connecté, on redirige vers MainPage
+        print('Utilisateur connecté');
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainPage()),
+          );
+        }
+      } else {
+        // Si l'utilisateur n'est pas connecté, on redirige vers HomeAuth
+        print('Utilisateur non connecté');
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeAuth()),
+          );
+        }
+      }
+    } catch (e) {
+      print('Erreur lors de la vérification de l\'authentification: $e');
+      // Redirection vers HomeAuth en cas d'erreur
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeAuth()),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-
+    // Vous pouvez retourner un widget SplashScreen ou une animation de chargement ici
     return const Scaffold(
-
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }

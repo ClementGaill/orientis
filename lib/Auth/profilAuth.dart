@@ -1,9 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, file_names, non_constant_identifier_names, prefer_const_literals_to_create_immutables, library_private_types_in_public_api, prefer_final_fields
-
-import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:orienty/Main/mainPage.dart';
@@ -15,62 +12,6 @@ import 'dart:convert';
 
 import 'package:page_transition/page_transition.dart';
 
-class MainAuthProfile extends StatelessWidget {
-  final String userId;
-  
-  const MainAuthProfile({required this.userId, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final TextEditingController nameController = TextEditingController();
-
-    Future<void> saveAccount() async {
-      try {
-        Client client = Client()
-            .setEndpoint('https://cloud.appwrite.io/v1')
-            .setProject(dotenv.env['APPWRITE_PROJECT_ID'] ?? '');
-        Account account = Account(client);
-
-        await account.updatePrefs(
-          prefs: {'name': nameController.text.trim()},
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MyHomePage()),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Erreur lors de la configuration.")),
-        );
-      }
-    }
-
-    return Scaffold(
-      appBar: AppBar(title: const Text("Configurer le compte")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: "Nom",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: saveAccount,
-              child: const Text("Enregistrer"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 
 class UserProfile {
@@ -97,12 +38,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _controllerPseudo = TextEditingController();
   int _currentStep = 0;
 
-  late Client _client;
-  late Databases _databases;
-
-  final String _databaseId = '6759cd6e001c2ac7636f';
-  final String _collectionId = '6759cd7a0007299ae37f';
-
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final List<String> _titles = [
     "Tes informations personnelles",
     "Ton pseudo",
@@ -127,13 +63,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
   @override
   void initState() {
     super.initState();
-
-    // Initialiser AppWrite client
-    _client = Client()
-        .setEndpoint('https://cloud.appwrite.io/v1')
-        .setProject(dotenv.env['APPWRITE_PROJECT_ID'] ?? '');
-    _databases = Databases(_client);
-
     // Ajouter les étapes du formulaire
     _fields.addAll([
       // Étape 1: Nom et prénom
@@ -222,56 +151,30 @@ class _RegistrationPageState extends State<RegistrationPage> {
     ]);
   }
 
-  Future<void> _createUserProfile() async {
+    Future<void> _saveUserProfile() async {
     try {
-      // Remplir les données du profil utilisateur
-      _userProfile.nom = _controllerNom.text.trim();
-      _userProfile.prenom = _controllerPrenom.text.trim();
-      _userProfile.pseudo = _controllerPseudo.text.trim();
+      await _firestore.collection('Users').doc(widget.userId).set({
+        'nom': _userProfile.nom,
+        'prenom': _userProfile.prenom,
+        'pseudo': _userProfile.pseudo,
+        'type': _userProfile.type,
+        'nom_etablissement': _userProfile.nom_etablissement,
+        'publique': _userProfile.publique,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
-      // Vérifier que les champs obligatoires sont remplis
-      if (_userProfile.nom.isEmpty ||
-          _userProfile.prenom.isEmpty ||
-          _userProfile.pseudo.isEmpty) {
-        throw Exception("Tous les champs doivent être remplis.");
-      }
-
-      Account account = Account(_client);
-      try {
-        User user = await account.get();
-        print('Utilisateur connecté : ${user.email}');
-      } catch (e) {
-        print('Aucun utilisateur connecté.');
-        // Rediriger l'utilisateur vers une page de connexion
-      }
-
-
-      // Créer le document
-      await _databases.createDocument(
-        databaseId: _databaseId,
-        collectionId: _collectionId,
-        documentId: widget.userId,
-        data: {
-          'Nom': _userProfile.nom,
-          'Prenom': _userProfile.prenom,
-          'Pseudo': _userProfile.pseudo,
-          'Type': _userProfile.type,
-          'NomEtablissement': _userProfile.nom_etablissement,
-          'AccountPublique': _userProfile.publique,
-        },
-        permissions: [
-          Permission.read(Role.user(widget.userId)),
-          Permission.write(Role.user(widget.userId)),
-        ],
+      Navigator.pushReplacement(
+        context,
+        PageTransition(
+          type: PageTransitionType.rightToLeft,
+          child: const MainPage(),
+          duration: const Duration(milliseconds: 500),
+        ),
       );
-      
-      Navigator.push(context, PageTransition(type: PageTransitionType.bottomToTop, child: const MyHomePage(), duration: const Duration(milliseconds: 500)));
     } catch (e) {
-      // Gérer les erreurs
-      print("Erreur lors de la création du profil : $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur : ${e.toString()}')),
-      );
+      setState(() {
+        _errorMessage = 'Erreur lors de la sauvegarde : $e';
+      });
     }
   }
 
@@ -315,7 +218,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       });
     } else {
       // Dernière étape : envoi des données
-      await _createUserProfile();
+      await _saveUserProfile();
     }
   }
 
